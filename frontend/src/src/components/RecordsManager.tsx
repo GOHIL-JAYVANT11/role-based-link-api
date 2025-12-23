@@ -3,7 +3,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { Upload, Search } from "lucide-react";
 import * as XLSX from "xlsx";
 
-const API_BASE = "http://localhost:8000";
+const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 type RecordResult = {
   record_id?: number;
