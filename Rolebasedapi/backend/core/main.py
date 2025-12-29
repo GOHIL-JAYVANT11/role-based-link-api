@@ -9,7 +9,7 @@ app.add_middleware(
     allow_origins=["*"],  # React frontend
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*"],    
 )
 
 # ✅ Include all routes
@@ -18,3 +18,4 @@ app.include_router(router)
 @app.get("/")
 def home():
     return {"message": "FastAPI Backend Running"}
+print("FastAPI Backend is running...")
