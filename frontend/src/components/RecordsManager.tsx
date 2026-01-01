@@ -6,7 +6,6 @@ import * as XLSX from "xlsx";
 const API_BASE = import.meta.env.VITE_API_BASE_URL;
 
 const MAX_RECORDS = 1_000_000;
-const CHUNK_SIZE = 5000;
 
 type RecordResult = {
   record_id?: number;
@@ -148,7 +147,7 @@ export function RecordsManager() {
     try {
       setLoading(true);
       setMessage("");
-      setProgress("Preparing records...");
+      setProgress("Uploading all records in one go...");
 
       const token = localStorage.getItem("token");
 
@@ -161,36 +160,31 @@ export function RecordsManager() {
         ).trim(),
       }));
 
-      for (let i = 0; i < mapped.length; i += CHUNK_SIZE) {
-        const chunk = mapped.slice(i, i + CHUNK_SIZE);
+      // 🚀 SINGLE API CALL - All records at once
+      const res = await fetch(`${API_BASE}/records/upload-mapped`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ records: mapped }),
+      });
 
-        const res = await fetch(`${API_BASE}/records/upload-mapped`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ records: chunk }),
-        });
+      const data = await res.json();
 
-        if (!res.ok) {
-          throw new Error("Chunk upload failed");
-        }
-
-        setProgress(
-          `Uploaded ${Math.min(i + CHUNK_SIZE, mapped.length)} / ${mapped.length}`
-        );
+      if (!res.ok) {
+        throw new Error(data.detail || "Upload failed");
       }
 
-      setMessage(`✅ Successfully uploaded ${mapped.length} records`);
+      setMessage(`✅ Successfully uploaded ${data.inserted} records (${data.skipped} skipped)`);
       setProgress("");
       setFile(null);
       setColumns([]);
       setRows([]);
       setContactCol("");
       setSourceCol("");
-    } catch {
-      setMessage("Upload failed");
+    } catch (error) {
+      setMessage(`Upload failed: ${error instanceof Error ? error.message : "Unknown error"}`);
     } finally {
       setLoading(false);
     }
